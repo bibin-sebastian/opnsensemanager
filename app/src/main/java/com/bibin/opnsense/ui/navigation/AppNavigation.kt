@@ -1,7 +1,7 @@
 package com.bibin.opnsense.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DevicesOther
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -47,7 +47,7 @@ fun AppNavigation(
                         NavigationBarItem(
                             icon = {
                                 Icon(
-                                    imageVector = if (screen == Screen.Devices) Icons.Default.DevicesOther
+                                    imageVector = if (screen == Screen.Devices) Icons.Default.Home
                                                   else Icons.Default.Settings,
                                     contentDescription = screen.label,
                                 )

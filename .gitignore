@@ -1,15 +1,38 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-.DS_Store
+# Android build outputs
 /build
-/captures
+app/build
+**/build/
+
+# Gradle
+.gradle
+gradle/wrapper/gradle-wrapper.jar
+local.properties
+
+# IDE
+/.idea
+**/.idea
+*.iml
+.DS_Store
+
+# Native
 .externalNativeBuild
 .cxx
-local.properties
-releases/*.apk
+
+# Keys & secrets
 *.keystore
+*.jks
+local.properties
+
+# Heap dumps & profiling
+*.hprof
+
+# Release APKs (keep folder, not contents)
+releases/*.apk
 !releases/.gitkeep
+
+# Superpowers / Claude
 .superpowers/
 /.claude
+
+# Captures
+/captures

@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -118,7 +118,7 @@ private fun DeviceRow(
         supportingContent = { Text("${device.ip} · ${device.mac}") },
         leadingContent = {
             Icon(
-                imageVector = if (device.isBlocked) Icons.Default.Block else Icons.Default.CheckCircle,
+                imageVector = if (device.isBlocked) Icons.Default.Lock else Icons.Default.Check,
                 contentDescription = null,
                 tint = if (device.isBlocked) MaterialTheme.colorScheme.error
                        else MaterialTheme.colorScheme.primary,
