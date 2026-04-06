@@ -32,6 +32,14 @@ interface OPNsenseApi {
     @POST("api/firewall/filter/addRule")
     suspend fun createRule(@Body request: FirewallRuleRequest): SaveItemResponse
 
+    @POST("api/firewall/filter/delRule/{uuid}")
+    suspend fun deleteRule(@Path("uuid") uuid: String): SaveItemResponse
+
     @POST("api/firewall/filter/apply")
     suspend fun applyRules(): ReconfigureResponse
+
+    // Firewall state table — core endpoint, used to derive per-device traffic
+    // OPNsense maps snake_case action query_states → camelCase URL queryStates
+    @POST("api/diagnostics/firewall/queryStates")
+    suspend fun queryPfStates(@Body request: Map<String, String> = emptyMap()): PfStatesResponse
 }

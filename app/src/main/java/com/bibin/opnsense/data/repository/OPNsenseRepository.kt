@@ -1,5 +1,6 @@
 package com.bibin.opnsense.data.repository
 
+import android.util.Log
 import com.bibin.opnsense.data.remote.OPNsenseApi
 import com.bibin.opnsense.data.remote.OPNsenseClient
 import com.bibin.opnsense.data.remote.dto.*
@@ -32,7 +33,7 @@ class OPNsenseRepository @Inject constructor(
      * to determine blocked status per device.
      */
     suspend fun fetchDevices(): List<Device> {
-        val leases = api.getDhcpLeases().rows
+        val leases = api.getDhcpLeases().rows.filter { it.address.isNotBlank() }
         val blockedIps = getBlockedIps()
         return leases.map { row ->
             Device(
@@ -48,6 +49,8 @@ class OPNsenseRepository @Inject constructor(
 
     suspend fun testConnection(): Boolean = runCatching {
         api.getDhcpLeases()
+    }.onFailure { e ->
+        Log.e("OPNsenseRepo", "testConnection failed: ${e::class.simpleName}: ${e.message}", e)
     }.isSuccess
 
     /**
@@ -109,4 +112,33 @@ class OPNsenseRepository @Inject constructor(
     private fun buildAliasRequest(content: String) = AliasItemRequest(
         alias = AliasPayload(name = BLOCK_ALIAS_NAME, content = content)
     )
+
+    // -------------------------------------------------------------------------
+    // Traffic diagnostics — derived from the pf state table
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the total bytes seen in the pf state table for [deviceIp]
+     * (as both source and destination), or null if the device has no active states.
+     *
+     * The ViewModel calls this repeatedly and diffs successive values to get a rate.
+     * Note: pf state rows don't separate in/out direction, so we return total only.
+     */
+    data class DeviceStateSnapshot(val bytesIn: Long, val bytesOut: Long)
+
+    /**
+     * Queries the pf state table and returns aggregated in/out bytes for [deviceIp].
+     * Returns null if the device has no active states.
+     * bytes[0] = bytes_in, bytes[1] = bytes_out per row.
+     */
+    suspend fun fetchDeviceStateBytes(deviceIp: String): DeviceStateSnapshot? {
+        val rows = api.queryPfStates().rows.filter { row ->
+            row.srcAddr == deviceIp || row.dstAddr == deviceIp
+        }
+        if (rows.isEmpty()) return null
+        return DeviceStateSnapshot(
+            bytesIn  = rows.sumOf { it.bytesIn },
+            bytesOut = rows.sumOf { it.bytesOut },
+        )
+    }
 }

@@ -11,3 +11,7 @@ data class Device(
 
 val Device.displayName: String
     get() = friendlyName?.takeIf { it.isNotBlank() } ?: hostname.takeIf { it.isNotBlank() } ?: ip
+
+/** Stable key for local storage: use MAC when available, fall back to IP for devices without one. */
+val Device.stableId: String
+    get() = mac.ifBlank { ip }

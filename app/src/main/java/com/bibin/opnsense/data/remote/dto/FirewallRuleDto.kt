@@ -30,4 +30,6 @@ data class FirewallRulePayload(
     val destination_net: String = "any",
     val description: String = "OPNsense Manager block rule",
     val enabled: String = "1",
+    /** Optional: name of an OPNsense schedule object that controls when this rule is active. */
+    val sched: String? = null,
 )

@@ -43,7 +43,7 @@ object OPNsenseClient {
                 chain.proceed(request)
             }
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                level = HttpLoggingInterceptor.Level.BODY
             })
             .connectTimeout(10, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
@@ -54,7 +54,7 @@ object OPNsenseClient {
         return Retrofit.Builder()
             .baseUrl(baseUrl.trimEnd('/') + "/")
             .client(client)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .addConverterFactory(MoshiConverterFactory.create(moshi).asLenient())
             .build()
             .create(OPNsenseApi::class.java)
     }
