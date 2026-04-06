@@ -3,3 +3,6 @@
 -keepclassmembers class * {
     @com.squareup.moshi.Json <fields>;
 }
+
+# Suppress missing error-prone annotation warnings from Tink (used by EncryptedSharedPreferences)
+-dontwarn com.google.errorprone.annotations.**
