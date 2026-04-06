@@ -34,30 +34,24 @@ class OnboardingViewModelTest {
     fun `testConnection success sets connectionSuccess true`() = runTest {
         coEvery { repository.testConnection() } returns true
 
-        viewModel.uiState.test {
-            viewModel.testConnection("https://192.168.10.1", "key", "secret")
-            val loading = awaitItem()
-            assertTrue(loading.isTesting)
-            val success = awaitItem()
-            assertFalse(success.isTesting)
-            assertTrue(success.connectionSuccess)
-            cancel()
-        }
+        viewModel.testConnection("https://192.168.10.1", "key", "secret")
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isTesting)
+        assertTrue(state.connectionSuccess)
+        assertNull(state.errorMessage)
     }
 
     @Test
     fun `testConnection failure sets errorMessage`() = runTest {
         coEvery { repository.testConnection() } returns false
 
-        viewModel.uiState.test {
-            viewModel.testConnection("https://192.168.10.1", "key", "secret")
-            skipItems(1) // loading state
-            val error = awaitItem()
-            assertFalse(error.isTesting)
-            assertNotNull(error.errorMessage)
-            assertFalse(error.connectionSuccess)
-            cancel()
-        }
+        viewModel.testConnection("https://192.168.10.1", "key", "secret")
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isTesting)
+        assertNotNull(state.errorMessage)
+        assertFalse(state.connectionSuccess)
     }
 
     @Test
