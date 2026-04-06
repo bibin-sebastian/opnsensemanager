@@ -36,3 +36,4 @@ releases/*.apk
 
 # Captures
 /captures
+/docs
