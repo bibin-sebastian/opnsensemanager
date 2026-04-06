@@ -18,10 +18,8 @@ class BiometricHelper @Inject constructor(
 
     fun canAuthenticate(): Boolean {
         val manager = BiometricManager.from(context)
-        return manager.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-            BiometricManager.Authenticators.DEVICE_CREDENTIAL
-        ) == BiometricManager.BIOMETRIC_SUCCESS
+        return manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) ==
+            BiometricManager.BIOMETRIC_SUCCESS
     }
 
     companion object {

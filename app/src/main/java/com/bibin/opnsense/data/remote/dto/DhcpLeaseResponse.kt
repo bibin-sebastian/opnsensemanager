@@ -13,14 +13,7 @@ data class DhcpLeaseResponse(
 @JsonClass(generateAdapter = true)
 data class DhcpLeaseRow(
     val address: String = "",
-    @Json(name = "hwaddr") val mac: String = "",   // may be absent on static leases
+    @Json(name = "hwaddr") val mac: String = "",
     val hostname: String = "",
     val state: String = "",
-    val descr: String? = null,
-    val man: String? = null,     // manufacturer
-    val starts: String? = null,
-    val ends: String? = null,
-    @Json(name = "if") val iface: String? = null,
-    @Json(name = "if_descr") val ifDescr: String? = null,
-    val type: String? = null,
 )

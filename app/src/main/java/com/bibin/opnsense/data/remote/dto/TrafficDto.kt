@@ -22,13 +22,9 @@ data class PfStateRow(
     @Json(name = "src_port") val srcPort: String = "",
     @Json(name = "dst_addr") val dstAddr: String = "",
     @Json(name = "dst_port") val dstPort: String = "",
-    @Json(name = "nat_addr") val natAddr: String = "",
     val proto: String = "",
     val bytes: List<String> = emptyList(),
-    val packets: List<String> = emptyList(),
     val state: String = "",
-    val label: String = "",
-    val iface: String = "",
 ) {
     val bytesIn:  Long get() = bytes.getOrNull(0)?.toLongOrNull() ?: 0L
     val bytesOut: Long get() = bytes.getOrNull(1)?.toLongOrNull() ?: 0L

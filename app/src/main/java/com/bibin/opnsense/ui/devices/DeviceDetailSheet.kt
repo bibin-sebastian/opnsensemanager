@@ -21,6 +21,7 @@ fun DeviceDetailSheet(
     device: Device,
     onDismiss: () -> Unit,
     viewModel: DeviceDetailViewModel = hiltViewModel<DeviceDetailViewModel, DeviceDetailViewModel.Factory>(
+        key = device.ip,
         creationCallback = { factory -> factory.create(device) }
     ),
 ) {

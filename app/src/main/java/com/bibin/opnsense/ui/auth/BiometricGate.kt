@@ -60,7 +60,7 @@ fun BiometricGate(
             .setTitle("OPNsense Manager")
             .setSubtitle("Authenticate to access your firewall")
             .setAllowedAuthenticators(
-                androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK or
                 androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
             )
             .build()
