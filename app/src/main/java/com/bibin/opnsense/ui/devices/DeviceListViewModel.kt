@@ -30,11 +30,14 @@ class DeviceListViewModel @Inject constructor(
 
     private val _rawState = MutableStateFlow(DeviceListUiState())
     val searchQuery = MutableStateFlow("")
+    val showBlockedOnly = MutableStateFlow(false)
 
     /** Filtered view — what the UI observes. */
-    val uiState = combine(_rawState, searchQuery) { state, query ->
-        if (query.isBlank()) state
-        else state.copy(devices = state.devices.filter { it.matches(query) })
+    val uiState = combine(_rawState, searchQuery, showBlockedOnly) { state, query, blockedOnly ->
+        var devices = state.devices
+        if (blockedOnly) devices = devices.filter { it.isBlocked }
+        if (query.isNotBlank()) devices = devices.filter { it.matches(query) }
+        state.copy(devices = devices)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DeviceListUiState())
 
     init { loadDevices() }
@@ -55,6 +58,10 @@ class DeviceListViewModel @Inject constructor(
 
     fun onSearchQueryChange(query: String) {
         searchQuery.value = query
+    }
+
+    fun toggleShowBlockedOnly() {
+        showBlockedOnly.value = !showBlockedOnly.value
     }
 
     fun toggleBlock(device: Device) {

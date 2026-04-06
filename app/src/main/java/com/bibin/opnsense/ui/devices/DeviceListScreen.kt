@@ -33,6 +33,7 @@ fun DeviceListScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val showBlockedOnly by viewModel.showBlockedOnly.collectAsState()
     var isSearchActive by remember { mutableStateOf(false) }
     var selectedDevice by remember { mutableStateOf<Device?>(null) }
     val focusRequester = remember { FocusRequester() }
@@ -55,6 +56,12 @@ fun DeviceListScreen(
                 TopAppBar(
                     title = { Text("Devices") },
                     actions = {
+                        FilterChip(
+                            selected = showBlockedOnly,
+                            onClick = { viewModel.toggleShowBlockedOnly() },
+                            label = { Text("Blocked") },
+                            modifier = Modifier.padding(end = 4.dp),
+                        )
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         }
@@ -101,6 +108,12 @@ fun DeviceListScreen(
                     modifier = Modifier
                         .align(Alignment.Center)
                         .padding(24.dp),
+                    color = MaterialTheme.colorScheme.outline,
+                )
+
+                state.devices.isEmpty() && showBlockedOnly -> Text(
+                    "No blocked devices",
+                    modifier = Modifier.align(Alignment.Center),
                     color = MaterialTheme.colorScheme.outline,
                 )
 
