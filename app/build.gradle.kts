@@ -14,8 +14,8 @@ android {
         applicationId = "com.bibin.opnsense"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "2.0.0"
     }
 
     buildTypes {
@@ -47,8 +47,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
-    implementation(libs.hilt.work)
-    ksp(libs.hilt.work.compiler)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
@@ -58,8 +56,8 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.moshi)
     implementation(libs.coroutines.android)
-    implementation(libs.work.runtime.ktx)
     implementation(libs.security.crypto)
+    implementation(libs.biometric)
     implementation(libs.navigation.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     testImplementation(libs.junit)

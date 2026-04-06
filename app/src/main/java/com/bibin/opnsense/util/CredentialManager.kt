@@ -35,6 +35,9 @@ class CredentialManager @Inject constructor(
         get() = prefs.getString(KEY_API_SECRET, "") ?: ""
         set(value) = prefs.edit().putString(KEY_API_SECRET, value).apply()
 
+    val isKeySet: Boolean
+        get() = apiKey.isNotBlank()
+
     val isConfigured: Boolean
         get() = firewallUrl.isNotBlank() && apiKey.isNotBlank() && apiSecret.isNotBlank()
 

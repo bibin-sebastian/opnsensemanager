@@ -113,32 +113,20 @@ class OPNsenseRepository @Inject constructor(
         alias = AliasPayload(name = BLOCK_ALIAS_NAME, content = content)
     )
 
-    // -------------------------------------------------------------------------
-    // Traffic diagnostics — derived from the pf state table
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the total bytes seen in the pf state table for [deviceIp]
-     * (as both source and destination), or null if the device has no active states.
-     *
-     * The ViewModel calls this repeatedly and diffs successive values to get a rate.
-     * Note: pf state rows don't separate in/out direction, so we return total only.
-     */
-    data class DeviceStateSnapshot(val bytesIn: Long, val bytesOut: Long)
-
-    /**
-     * Queries the pf state table and returns aggregated in/out bytes for [deviceIp].
-     * Returns null if the device has no active states.
-     * bytes[0] = bytes_in, bytes[1] = bytes_out per row.
-     */
-    suspend fun fetchDeviceStateBytes(deviceIp: String): DeviceStateSnapshot? {
+    suspend fun fetchDeviceConnections(deviceIp: String): List<ConnectionEntry> {
         val rows = api.queryPfStates().rows.filter { row ->
             row.srcAddr == deviceIp || row.dstAddr == deviceIp
         }
-        if (rows.isEmpty()) return null
-        return DeviceStateSnapshot(
-            bytesIn  = rows.sumOf { it.bytesIn },
-            bytesOut = rows.sumOf { it.bytesOut },
-        )
+        return rows.map { row ->
+            ConnectionEntry(
+                proto      = row.proto.ifBlank { "?" },
+                srcAddr    = row.srcAddr,
+                srcPort    = row.srcPort,
+                dstAddr    = row.dstAddr,
+                dstPort    = row.dstPort,
+                state      = row.state,
+                totalBytes = row.totalBytes,
+            )
+        }
     }
 }

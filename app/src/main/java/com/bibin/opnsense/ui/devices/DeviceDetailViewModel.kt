@@ -2,6 +2,7 @@ package com.bibin.opnsense.ui.devices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bibin.opnsense.data.remote.dto.ConnectionEntry
 import com.bibin.opnsense.data.repository.LocalRepository
 import com.bibin.opnsense.data.repository.OPNsenseRepository
 import com.bibin.opnsense.domain.model.Device
@@ -16,18 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class TrafficPoint(
-    val timestampMs: Long,
-    val kbpsIn: Float,
-    val kbpsOut: Float,
-)
-
 data class DetailUiState(
-    val isLoadingTraffic: Boolean = false,
-    val trafficHistory: List<TrafficPoint> = emptyList(),
-    val totalBytesIn: Long = 0L,
-    val totalBytesOut: Long = 0L,
-    val trafficError: String? = null,
+    val connections: List<ConnectionEntry> = emptyList(),
+    val isLoadingConnections: Boolean = false,
+    val connectionsError: String? = null,
     val errorMessage: String? = null,
 )
 
@@ -42,7 +35,7 @@ class DeviceDetailViewModel @AssistedInject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
-        startTrafficPolling()
+        startConnectionPolling()
     }
 
     fun saveFriendlyName(name: String) {
@@ -57,52 +50,24 @@ class DeviceDetailViewModel @AssistedInject constructor(
 
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 
-    /**
-     * Polls the pf state table every [POLL_INTERVAL_MS].
-     * On each poll, diffs the total bytes against the previous sample to derive kbps.
-     * Because pf states don't separate in/out, we show combined rate on the chart
-     * and label it as "activity".
-     */
-    private fun startTrafficPolling() {
+    private fun startConnectionPolling() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingTraffic = true) }
-            var prevSnapshot: OPNsenseRepository.DeviceStateSnapshot? = null
-            var prevTimeMs = System.currentTimeMillis()
+            _uiState.update { it.copy(isLoadingConnections = true) }
             while (true) {
                 runCatching {
-                    opnRepo.fetchDeviceStateBytes(device.ip)
-                }.onSuccess { snapshot ->
-                    val now = System.currentTimeMillis()
-                    val elapsedSec = ((now - prevTimeMs) / 1000.0).coerceAtLeast(1.0)
-
-                    val kbpsIn: Float
-                    val kbpsOut: Float
-                    if (prevSnapshot != null && snapshot != null) {
-                        val diffIn  = (snapshot.bytesIn  - prevSnapshot!!.bytesIn).coerceAtLeast(0L)
-                        val diffOut = (snapshot.bytesOut - prevSnapshot!!.bytesOut).coerceAtLeast(0L)
-                        kbpsIn  = (diffIn  * 8 / elapsedSec / 1000).toFloat()
-                        kbpsOut = (diffOut * 8 / elapsedSec / 1000).toFloat()
-                    } else {
-                        kbpsIn  = 0f
-                        kbpsOut = 0f
-                    }
-
-                    prevSnapshot = snapshot
-                    prevTimeMs = now
-
-                    val point = TrafficPoint(now, kbpsIn, kbpsOut)
-                    _uiState.update { state ->
-                        val history = (state.trafficHistory + point).takeLast(MAX_HISTORY)
-                        state.copy(
-                            isLoadingTraffic = false,
-                            trafficHistory = history,
-                            totalBytesIn  = snapshot?.bytesIn  ?: state.totalBytesIn,
-                            totalBytesOut = snapshot?.bytesOut ?: state.totalBytesOut,
-                            trafficError = null,
+                    opnRepo.fetchDeviceConnections(device.ip)
+                }.onSuccess { entries ->
+                    _uiState.update {
+                        it.copy(
+                            isLoadingConnections = false,
+                            connections = entries,
+                            connectionsError = null,
                         )
                     }
                 }.onFailure { e ->
-                    _uiState.update { it.copy(isLoadingTraffic = false, trafficError = e.message) }
+                    _uiState.update {
+                        it.copy(isLoadingConnections = false, connectionsError = e.message)
+                    }
                 }
                 delay(POLL_INTERVAL_MS)
             }
@@ -115,7 +80,6 @@ class DeviceDetailViewModel @AssistedInject constructor(
     }
 
     companion object {
-        private const val POLL_INTERVAL_MS = 10_000L  // 10 seconds
-        private const val MAX_HISTORY = 360            // 360 × 10 s = 1 hour
+        private const val POLL_INTERVAL_MS = 10_000L
     }
 }
