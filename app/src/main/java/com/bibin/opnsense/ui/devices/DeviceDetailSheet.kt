@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bibin.opnsense.data.remote.dto.ConnectionEntry
@@ -39,7 +40,7 @@ fun DeviceDetailSheet(
             // Header
             Text(device.displayName, style = MaterialTheme.typography.titleLarge)
             Text(
-                "${device.ip}  ·  ${device.mac.ifBlank { "no MAC" }}",
+                "${device.ip}  ·  ${if (device.mac.isBlank()) "no MAC" else "MAC: ${device.mac}"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
             )
@@ -182,47 +183,82 @@ private fun ConnectionRow(conn: ConnectionEntry) {
         }
 
         // Source IP:port
-        Column(modifier = Modifier.weight(1f).padding(horizontal = 4.dp)) {
-            Text(
-                conn.srcAddr,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-            )
-            if (conn.srcPort.isNotBlank() && conn.srcPort != "0") {
-                Text(
-                    ":${conn.srcPort}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
-        }
+        IpColumn(
+            name = conn.srcName,
+            addr = conn.srcAddr,
+            port = conn.srcPort,
+            modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+        )
 
         // Destination IP:port
-        Column(modifier = Modifier.weight(1f).padding(horizontal = 4.dp)) {
+        IpColumn(
+            name = conn.dstName,
+            addr = conn.dstAddr,
+            port = conn.dstPort,
+            modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+        )
+
+        // Bytes + age
+        Column(
+            modifier = Modifier.width(60.dp),
+            horizontalAlignment = Alignment.End,
+        ) {
             Text(
-                conn.dstAddr,
+                formatBytes(conn.totalBytes),
+                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            Text(
+                formatAge(conn.firstSeenMs),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun IpColumn(name: String?, addr: String, port: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        if (name != null) {
+            Text(
+                name,
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                addr,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                fontFamily = FontFamily.Monospace,
+            )
+        } else {
+            Text(
+                addr,
                 style = MaterialTheme.typography.bodySmall,
                 fontFamily = FontFamily.Monospace,
             )
-            if (conn.dstPort.isNotBlank() && conn.dstPort != "0") {
-                Text(
-                    ":${conn.dstPort}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    fontFamily = FontFamily.Monospace,
-                )
-            }
         }
+        if (port.isNotBlank() && port != "0") {
+            Text(
+                ":$port",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.outline,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+    }
+}
 
-        // Total bytes
-        Text(
-            formatBytes(conn.totalBytes),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.width(60.dp),
-        )
+private fun formatAge(firstSeenMs: Long): String {
+    val secs = (System.currentTimeMillis() - firstSeenMs) / 1_000
+    return when {
+        secs < 10   -> "just now"
+        secs < 60   -> "${secs}s"
+        secs < 3600 -> "${secs / 60}m"
+        else        -> "${secs / 3600}h"
     }
 }
 

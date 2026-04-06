@@ -37,7 +37,7 @@ class OPNsenseRepository @Inject constructor(
         val blockedIps = getBlockedIps()
         return leases.map { row ->
             Device(
-                mac = row.mac,
+                mac = row.macAddress,
                 ip = row.address,
                 hostname = row.hostname,
                 friendlyName = null, // populated by caller from LocalRepository

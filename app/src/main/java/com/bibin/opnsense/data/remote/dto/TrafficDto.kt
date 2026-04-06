@@ -39,4 +39,10 @@ data class ConnectionEntry(
     val dstPort: String,
     val state: String,
     val totalBytes: Long,
-)
+    val srcName: String? = null,       // friendly name or reverse-DNS label
+    val dstName: String? = null,
+    val firstSeenMs: Long = System.currentTimeMillis(),
+) {
+    /** Stable key used to match the same connection across polls. */
+    val key: String get() = "$proto|$srcAddr:$srcPort->$dstAddr:$dstPort"
+}

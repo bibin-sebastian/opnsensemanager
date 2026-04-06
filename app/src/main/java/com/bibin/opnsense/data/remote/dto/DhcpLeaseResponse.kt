@@ -13,7 +13,11 @@ data class DhcpLeaseResponse(
 @JsonClass(generateAdapter = true)
 data class DhcpLeaseRow(
     val address: String = "",
-    @Json(name = "hwaddr") val mac: String = "",
+    @Json(name = "hwaddr") val hwaddr: String = "",  // older OPNsense / ISC DHCP
+    val mac: String = "",                             // newer OPNsense / Kea DHCP
     val hostname: String = "",
     val state: String = "",
-)
+) {
+    /** Whichever field the running OPNsense version populates. */
+    val macAddress: String get() = hwaddr.ifBlank { mac }
+}

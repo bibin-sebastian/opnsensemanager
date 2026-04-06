@@ -6,7 +6,9 @@ import com.bibin.opnsense.data.remote.dto.ConnectionEntry
 import com.bibin.opnsense.data.repository.LocalRepository
 import com.bibin.opnsense.data.repository.OPNsenseRepository
 import com.bibin.opnsense.domain.model.Device
+import com.bibin.opnsense.domain.model.displayName
 import com.bibin.opnsense.domain.model.stableId
+import com.bibin.opnsense.util.DnsResolver
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -29,12 +31,20 @@ class DeviceDetailViewModel @AssistedInject constructor(
     @Assisted val device: Device,
     private val localRepo: LocalRepository,
     private val opnRepo: OPNsenseRepository,
+    private val dnsResolver: DnsResolver,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState = _uiState.asStateFlow()
 
+    /** ip → display name for all known LAN devices. Built once on init. */
+    private val localNames = mutableMapOf<String, String>()
+
+    /** connectionKey → epoch millis when we first observed this connection. */
+    private val firstSeenMap = mutableMapOf<String, Long>()
+
     init {
+        viewModelScope.launch { buildLocalNameMap() }
         startConnectionPolling()
     }
 
@@ -50,12 +60,38 @@ class DeviceDetailViewModel @AssistedInject constructor(
 
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
 
+    private suspend fun buildLocalNameMap() {
+        runCatching { opnRepo.fetchDevices() }.onSuccess { devices ->
+            devices.forEach { d ->
+                val name = localRepo.getFriendlyName(d.stableId)?.takeIf { it.isNotBlank() }
+                    ?: d.displayName
+                localNames[d.ip] = name
+            }
+        }
+    }
+
+    /** Returns a friendly label for [ip]: local device name → reverse DNS → null. */
+    private suspend fun resolveName(ip: String): String? =
+        localNames[ip] ?: dnsResolver.resolve(ip)
+
     private fun startConnectionPolling() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingConnections = true) }
             while (true) {
                 runCatching {
-                    opnRepo.fetchDeviceConnections(device.ip)
+                    val entries = opnRepo.fetchDeviceConnections(device.ip)
+                    // Resolve unique IPs concurrently (cache makes repeated calls cheap)
+                    val uniqueIps = (entries.map { it.srcAddr } + entries.map { it.dstAddr }).toSet()
+                    val nameMap = uniqueIps.associateWith { resolveName(it) }
+                    val now = System.currentTimeMillis()
+                    entries.map { e ->
+                        val seen = firstSeenMap.getOrPut(e.key) { now }
+                        e.copy(
+                            srcName = nameMap[e.srcAddr],
+                            dstName = nameMap[e.dstAddr],
+                            firstSeenMs = seen,
+                        )
+                    }
                 }.onSuccess { entries ->
                     _uiState.update {
                         it.copy(
